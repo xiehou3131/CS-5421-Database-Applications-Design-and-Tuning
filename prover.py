@@ -1,20 +1,22 @@
 class Prover:
-
     def __init__(self, R: list) -> None:
+        self.attrs = R
         self.fds = []
         self.context = []
-        self.steps = []
         self.status = {}
         self.goal = None
 
-    def set_goal(self, fd) -> None:
+    def set_goal(self, fd) -> bool:
         lhs = set(fd[0])
         rhs = set(fd[1])
         self.goal = [sorted(list(lhs)), sorted(list(rhs))]
-
+        return True
+    
     def finished(self) -> bool:
         if self.goal is None:
             raise Exception("No goal is set.")
+        if len(self.fds) == 0:
+            return False
         
         goal_lhs = set(self.goal[0])
         goal_rhs = set(self.goal[1])
@@ -27,23 +29,33 @@ class Prover:
         print("    goal FD:", self.goal)
         print("    last FD:", self.fds[-1])
         return False
-    
-    def print_procedure(self) -> None:
-        print("\nProof.")
-        for index in range(len(self.context)):
-            print(f" ({index + 1}) {self.context[index]['description']}")
 
-        print("Q.E.D.\n")
+    def print_procedure(self) -> None:
+        print(self.get_procedure())
+
+    def get_procedure(self) -> str:
+        ret = "Arrtibutes:\n"
+        ret += str(sorted(self.attrs))
+
+        ret += "\n\nGoal:\n"
+        ret += str(self.goal)
+        ret += "\n\nProof.\n"
+        for index in range(len(self.context)):
+            ret += f" ({index + 1}) {self.context[index]['description']}\n"
+
+        if self.finished():
+            ret += " Q.E.D."
+        return ret
 
     def print_fds(self) -> None:
         for fd in self.fds:
             print(sorted(fd))
 
-    def we_know_that(self, fd: list) -> None:
+    def we_know_that(self, fd: list) -> bool:
+        ret = f"We know that {sorted(fd[0])} -> {sorted(fd[1])}."
+        self.context.append({"fd": fd, "description": ret})
         self.fds.append(fd)
-        self.context.append(
-            {"fd": fd, "description": f"We know that {sorted(fd[0])} -> {sorted(fd[1])}."}
-        )
+        return True
 
     """
     Check Armstrong Axioms Reflexivity
@@ -53,7 +65,7 @@ class Prover:
     Returns:
     """
 
-    def reflexivity(self, fd_dst, stepA: int = 0) -> bool:
+    def reflexivity(self, fd_dst, stepA: int = 0) -> str:
         # TODO: stepA is not used
         # Therefore `fd` by Reflexivity since `stepA`.
         # Example:
@@ -62,15 +74,16 @@ class Prover:
         lhs = set(fd_dst[0])
         rhs = set(fd_dst[1])
         if rhs.issubset(lhs):
+            ret = f"Therefore {sorted(lhs)} -> {sorted(rhs)} by Reflexivity."
             self.context.append(
                 {
                     "fd": fd_dst,
-                    "description": f"Therefore {lhs} -> {rhs} by Reflexivity since ({stepA}).",
+                    "description": ret,
                 }
             )
             self.fds.append(fd_dst)
             return True
-        raise Exception("Reflexivity failed.")
+        return False
 
     """
     Check Armstrong Axioms Augmentation
@@ -93,24 +106,28 @@ class Prover:
         #     We know that X→Z. (6)
         #     Therefore X ∪ Y → Y ∪ Z by Augmentation of (6) with {Y}.
 
-        fd_src = self.context[stepA - 1]["fd"]
+        try:
+            fd_src = self.context[stepA - 1]["fd"]
 
-        lhs1 = set(fd_dst[0])
-        rhs1 = set(fd_dst[1])
+            lhs1 = set(fd_dst[0])
+            rhs1 = set(fd_dst[1])
 
-        lhs2 = set(fd_src[0]).union(set(R)) # left-hand-side after augmentation
-        rhs2 = set(fd_src[1]).union(set(R)) # right-hand-side after augmentation
+            lhs2 = set(fd_src[0]).union(set(R))  # left-hand-side after augmentation
+            rhs2 = set(fd_src[1]).union(set(R))  # right-hand-side after augmentation
 
-        if lhs1 == lhs2 and rhs1 == rhs2:
-            self.context.append(
-                {
-                    "fd": fd_dst,
-                    "description": f"Therefore {sorted(lhs1)} -> {sorted(rhs1)} by Augmentation of ({stepA}) with {R}.",
-                }
-            )
-            self.fds.append(fd_dst)
-            return True
-        raise Exception("Augmentation failed")
+            if lhs1 == lhs2 and rhs1 == rhs2:
+                ret = f"Therefore {sorted(lhs1)} -> {sorted(rhs1)} by Augmentation of ({stepA}) with {R}."
+                self.context.append(
+                    {
+                        "fd": fd_dst,
+                        "description": ret,
+                    }
+                )
+                self.fds.append(fd_dst)
+                return True
+        except Exception as e:
+            print(e)
+        return False
 
     """
     Check Armstrong Axioms Transitivity
@@ -125,28 +142,28 @@ class Prover:
         # Therefore `fd` by Transitivity of `stepA` and `stepB`
         # Example:
         #   (3) {A, C} → {A, B, C}
-        #   (4) {C} → {A, C} 
-        # 
+        #   (4) {C} → {A, C}
+        #
         #     Therefore {C} → {A, B, C} by Transitivity of (4) and (3).
-        
 
         fdA = self.context[stepA - 1]["fd"]
         fdB = self.context[stepB - 1]["fd"]
-        
+
         for _ in range(2):
             lhs1 = set(fdA[0])
             rhs1 = set(fdA[1])
             lhs2 = set(fdB[0])
             rhs2 = set(fdB[1])
-            
+
             if rhs1.issubset(lhs2):
                 lhs_new = lhs1
                 rhs_new = rhs2
                 fd_new = [list(lhs_new), list(rhs_new)]
+                ret = f"Therefore {sorted(lhs_new)} -> {sorted(rhs_new)} by Transitivity of ({stepB}) and ({stepA})."
                 self.context.append(
                     {
                         "fd": fd_new,
-                        "description": f"Therefore {sorted(lhs_new)} -> {sorted(rhs_new)} by Transitivity of ({stepB}) and ({stepA}).",
+                        "description": ret,
                     }
                 )
                 self.fds.append(fd_new)
@@ -154,6 +171,4 @@ class Prover:
 
             fdB = self.context[stepA - 1]["fd"]
             fdA = self.context[stepB - 1]["fd"]
-
-
-        raise Exception("Transitivity failed")
+        return False

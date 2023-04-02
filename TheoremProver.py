@@ -1,30 +1,11 @@
 import tkinter as tk
-
-def get_closure(R, F, S):
-
-    closure = set(S)
-
-    while True:
-    
-
-        closure_backup = set(closure)
-
-        # iterate the functional dependencies to check if there is a left hand side subset of the current closure
-        for FD in F:
-            if set(FD[0]).issubset(closure):
-                closure.update(FD[1])
-
-        # loop until there is no update to the closure
-        if closure_backup == closure:
-            break
-
-    return list(closure)
+from prover import Prover
 
 def on_button_click_schema():
     global R
     global F
     global G
-
+    global PROVER
     text = input_box_schema.get()
     input_box_schema.delete(0, tk.END)
 
@@ -36,13 +17,14 @@ def on_button_click_schema():
         G = []
         output_text.delete("1.0", tk.END)
         output_text.insert(tk.END, f"input '{text}' is valid.")
+        PROVER = Prover(R)
     else:
         output_text.delete("1.0", tk.END)
         output_text.insert(tk.END, f"input '{text}' is not valid!")
 
 def on_button_click_fd():
     global R
-    global F
+    global PROVER
     LHS = []
     RHS = []
 
@@ -81,13 +63,18 @@ def on_button_click_fd():
         return
 
     FD = [LHS, RHS]
-    F.append(FD)
-    output_fds()
+    proof_log = PROVER.we_know_that(FD)
+    if proof_log:
+        output_text.delete("1.0", tk.END)
+        output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+    else:
+        output_text.insert(tk.END, f"\nerror!")
 
 def on_button_click_goal():
     global R
     global F
     global G
+    global PROVER
     LHS = []
     RHS = []
 
@@ -126,13 +113,27 @@ def on_button_click_goal():
         return
 
     G = [LHS, RHS]
-    output_fds()
+    proof_log =  PROVER.set_goal(G)
+    if proof_log:
+        output_text.delete("1.0", tk.END)
+        output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+    else:
+        output_text.insert(tk.END, f"\nerror!")
 
 def on_button_click_proof():
     global R
     global F
 
     text = input_box_proof.get()
+
+    if text == "Q.E.D.":
+        if PROVER.finished():
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror!")
+        return
+
     input_box_proof.delete(0, tk.END)
 
     words = [word.strip() for word in text.split("|")]
@@ -191,9 +192,6 @@ def on_button_click_proof():
         index1_str = words[2]
         try:
             index1 = int(index1_str)
-            if index1 > len(F) or index1 < 1:
-                output_text.insert(tk.END, f"\nindex1 out of range!")
-                return
         except ValueError:
             output_text.insert(tk.END, f"\ninvalid index1!")
             return
@@ -202,18 +200,62 @@ def on_button_click_proof():
         index2_str = words[3]
         try:
             index2 = int(index2_str)
-            if index2 > len(F) or index2 < 1:
-                output_text.insert(tk.END, f"\nindex2 out of range!")
-                return
         except ValueError:
             output_text.insert(tk.END, f"\ninvalid index2!")
             return
 
-        print(goal, rule, F[index1 - 1], F[index2 - 1])
+        proof_log = PROVER.transitivity(goal, index1, index2)
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror!")
 
+    elif rule == "AUG":
+        if len(words) != 4:
+            output_text.insert(tk.END, f"\ninvalid proof!")
 
+        index = 0
+        index_str = words[2]
+        try:
+            index = int(index_str)
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index!")
+            return
+
+        attributes_list = words[3]
+        attributes = [word.strip() for word in attributes_list.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in attributes)
+        if valid:
+            for word in attributes:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+        else:
+            output_text.insert(tk.END, f"\n'{attributes}' is not valid!")
+            return
+
+        proof_log = PROVER.augmentation(goal, index, attributes)
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror!")
+
+    elif rule == "REF":
+        if len(words) != 2:
+            output_text.insert(tk.END, f"\ninvalid proof!")
     
-
+        proof_log = PROVER.reflexivity(goal)
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror!")
+        
+    else: 
+        output_text.insert(tk.END, f"\nerror!")
+        return
 
 
 
@@ -235,6 +277,7 @@ def output_fds():
     if len(G) > 0:
         output_text.insert(tk.END, f"\nYour goal: '{G[0]}' -> '{G[1]}'")
 
+PROVER = None
 R = {}
 F = []
 G = []
@@ -255,31 +298,31 @@ input_box_schema.grid(row=1, column=0)
 button_schema = tk.Button(left_frame, text="confirm", command=on_button_click_schema)
 button_schema.grid(row=2, column=0)
 
-label_FD = tk.Label(left_frame, text="Please input the FDs")
-label_FD.grid(row=4, column=0)
-label_LHS = tk.Label(left_frame, text="Please input the LHS")
-label_LHS.grid(row=5, column=0)
-label_RHS = tk.Label(left_frame, text="Please input the RHS")
-label_RHS.grid(row=5, column=1)
-input_box_LHS = tk.Entry(left_frame)
-input_box_LHS.grid(row=6, column=0)
-input_box_RHS = tk.Entry(left_frame)
-input_box_RHS.grid(row=6, column=1)
-button_fd = tk.Button(left_frame, text="add", command=on_button_click_fd)
-button_fd.grid(row=7, column=0)
-
 label_goal = tk.Label(left_frame, text="Please input your goal")
-label_goal.grid(row=9, column=0)
+label_goal.grid(row=3, column=0)
 label_goal_LHS = tk.Label(left_frame, text="Please input the LHS")
-label_goal_LHS.grid(row=10, column=0)
+label_goal_LHS.grid(row=4, column=0)
 label_goal_RHS = tk.Label(left_frame, text="Please input the RHS")
-label_goal_RHS.grid(row=10, column=1)
+label_goal_RHS.grid(row=4, column=1)
 input_box_goal_LHS = tk.Entry(left_frame)
-input_box_goal_LHS.grid(row=11, column=0)
+input_box_goal_LHS.grid(row=5, column=0)
 input_box_goal_RHS = tk.Entry(left_frame)
-input_box_goal_RHS.grid(row=11, column=1)
+input_box_goal_RHS.grid(row=5, column=1)
 button_goal = tk.Button(left_frame, text="confirm", command=on_button_click_goal)
-button_goal.grid(row=12, column=0)
+button_goal.grid(row=6, column=0)
+
+label_FD = tk.Label(left_frame, text="Please input the FDs")
+label_FD.grid(row=7, column=0)
+label_LHS = tk.Label(left_frame, text="Please input the LHS")
+label_LHS.grid(row=8, column=0)
+label_RHS = tk.Label(left_frame, text="Please input the RHS")
+label_RHS.grid(row=8, column=1)
+input_box_LHS = tk.Entry(left_frame)
+input_box_LHS.grid(row=9, column=0)
+input_box_RHS = tk.Entry(left_frame)
+input_box_RHS.grid(row=9, column=1)
+button_fd = tk.Button(left_frame, text="add", command=on_button_click_fd)
+button_fd.grid(row=10, column=0)
 
 label_proof = tk.Label(left_frame, text="Your proof:")
 label_proof.grid(row=13, column=0)
