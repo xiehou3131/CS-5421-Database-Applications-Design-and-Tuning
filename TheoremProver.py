@@ -128,6 +128,95 @@ def on_button_click_goal():
     G = [LHS, RHS]
     output_fds()
 
+def on_button_click_proof():
+    global R
+    global F
+
+    text = input_box_proof.get()
+    input_box_proof.delete(0, tk.END)
+
+    words = [word.strip() for word in text.split("|")]
+
+    # goal
+    goal = words[0]
+    goal_split = [word.strip() for word in goal.split("->")]
+    if len(goal_split) != 2:
+        output_text.insert(tk.END, f"\ninvalid goal!")
+        return
+    
+    LHS = []
+    RHS = []
+
+    # LHS of the goal
+    attributes = []
+    attributes = [word.strip() for word in goal_split[0].split(",")]
+    valid = all(len(word) == 1 and word.isupper() for word in attributes)
+    if valid:
+        for word in attributes:
+            if word not in R:
+                output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                return
+        
+        LHS = attributes
+    else:
+        output_text.insert(tk.END, f"\nLHS '{goal_split[0]}' is not valid!")
+        return
+
+    # RHS of the goal
+    attributes = []
+    attributes = [word.strip() for word in goal_split[1].split(",")]
+    valid = all(len(word) == 1 and word.isupper() for word in attributes)
+    if valid:
+        for word in attributes:
+            if word not in R:
+                output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                return
+        
+        RHS = attributes
+    else:
+        output_text.insert(tk.END, f"\nRHS '{goal_split[1]}' is not valid!")
+        return
+
+
+    goal = [LHS, RHS]
+
+    # rule
+    rule = words[1]
+
+    if rule == "TRA":
+        if len(words) != 4:
+            output_text.insert(tk.END, f"\ninvalid proof!")
+        
+        index1 = 0
+        index1_str = words[2]
+        try:
+            index1 = int(index1_str)
+            if index1 > len(F) or index1 < 1:
+                output_text.insert(tk.END, f"\nindex1 out of range!")
+                return
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index1!")
+            return
+
+        index2 = 0
+        index2_str = words[3]
+        try:
+            index2 = int(index2_str)
+            if index2 > len(F) or index2 < 1:
+                output_text.insert(tk.END, f"\nindex2 out of range!")
+                return
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index2!")
+            return
+
+        print(goal, rule, F[index1 - 1], F[index2 - 1])
+
+
+    
+
+
+
+
 def output_fds():
     global R
     global F
@@ -191,6 +280,14 @@ input_box_goal_RHS = tk.Entry(left_frame)
 input_box_goal_RHS.grid(row=11, column=1)
 button_goal = tk.Button(left_frame, text="confirm", command=on_button_click_goal)
 button_goal.grid(row=12, column=0)
+
+label_proof = tk.Label(left_frame, text="Your proof:")
+label_proof.grid(row=13, column=0)
+input_box_proof = tk.Entry(left_frame)
+input_box_proof.grid(row=14, column=0)
+button_proof = tk.Button(left_frame, text="check", command=on_button_click_proof)
+button_proof.grid(row=15, column=0)
+
 
 # 右边的框架
 right_frame = tk.Frame(root)
