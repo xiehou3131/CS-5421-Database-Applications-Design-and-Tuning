@@ -1,11 +1,33 @@
 class Prover:
 
-    def __init__(self, R: list, F: list) -> None:
+    def __init__(self, R: list) -> None:
         self.fds = []
         self.context = []
         self.steps = []
         self.status = {}
+        self.goal = None
 
+    def set_goal(self, fd) -> None:
+        lhs = set(fd[0])
+        rhs = set(fd[1])
+        self.goal = [sorted(list(lhs)), sorted(list(rhs))]
+
+    def finished(self) -> bool:
+        if self.goal is None:
+            raise Exception("No goal is set.")
+        
+        goal_lhs = set(self.goal[0])
+        goal_rhs = set(self.goal[1])
+        last_lhs = set(self.fds[-1][0])
+        last_rhs = set(self.fds[-1][1])
+
+        if goal_lhs == last_lhs and goal_rhs == last_rhs:
+            return True
+        print("Not finished:")
+        print("    goal FD:", self.goal)
+        print("    last FD:", self.fds[-1])
+        return False
+    
     def print_context(self) -> None:
         print("\nProof.")
         for index in range(len(self.context)):
@@ -83,7 +105,7 @@ class Prover:
             self.context.append(
                 {
                     "fd": fd_dst,
-                    "description": f"Therefore {lhs1} -> {rhs1} by Augmentation of ({stepA}) with {R}.",
+                    "description": f"Therefore {sorted(lhs1)} -> {sorted(rhs1)} by Augmentation of ({stepA}) with {R}.",
                 }
             )
             self.fds.append(fd_dst)
@@ -124,7 +146,7 @@ class Prover:
                 self.context.append(
                     {
                         "fd": fd_new,
-                        "description": f"Therefore {lhs_new} -> {rhs_new} by Transitivity of ({stepB}) and ({stepA}).",
+                        "description": f"Therefore {sorted(lhs_new)} -> {sorted(rhs_new)} by Transitivity of ({stepB}) and ({stepA}).",
                     }
                 )
                 self.fds.append(fd_new)
@@ -135,21 +157,3 @@ class Prover:
 
 
         raise Exception("Transitivity failed")
-
-
-if __name__ == "__main__":
-    R = ["A", "B", "C", "D"]
-    F = [["A", "B"], ["B", "C"], ["C", "D"], ["A", "C"]]
-    p = Prover(R, F)
-
-    p.we_know_that([["A"], ["B"]])
-    p.we_know_that([["C"], ["A"]])
-
-    p.augmentation([["A", "C"], ["A", "B", "C"]], 1, ["A", "C"])
-    p.augmentation([["C"], ["A", "C"]], 2, ["C"])
-    p.transitivity([["C"], ["A", "B", "C"]], 3, 4)
-    p.reflexivity([["A", "B", "C"], ["A", "B"]], 6)
-    p.transitivity([["C"], ["A","B"]], 6, 5)
-    
-    p.print_context()
-    p.print_fds()
