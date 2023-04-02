@@ -28,7 +28,7 @@ class Prover:
         print("    last FD:", self.fds[-1])
         return False
     
-    def print_context(self) -> None:
+    def print_procedure(self) -> None:
         print("\nProof.")
         for index in range(len(self.context)):
             print(f" ({index + 1}) {self.context[index]['description']}")
@@ -53,7 +53,7 @@ class Prover:
     Returns:
     """
 
-    def reflexivity(self, fd_dst, stepA: int) -> bool:
+    def reflexivity(self, fd_dst, stepA: int = 0) -> bool:
         # TODO: stepA is not used
         # Therefore `fd` by Reflexivity since `stepA`.
         # Example:
