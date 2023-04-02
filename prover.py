@@ -19,13 +19,9 @@ class Prover:
         if len(self.fds) == 0:
             return False
 
-        goal_lhs = set(self.goal[0])
-        goal_rhs = set(self.goal[1])
-        last_lhs = set(self.fds[-1][0])
-        last_rhs = set(self.fds[-1][1])
-
-        if goal_lhs == last_lhs and goal_rhs == last_rhs:
+        if self.exist(self.goal) != -1:
             return True
+        
         print("Not finished:")
         print("    goal FD:", self.goal)
         print("    last FD:", self.fds[-1])
@@ -35,12 +31,12 @@ class Prover:
         print(self.get_procedure())
 
     def get_procedure(self) -> str:
-        ret = "Arrtibutes:\n"
-        ret += str(sorted(self.attrs))
+        ret = "# Arrtibutes:\n"
+        ret += ','.join(sorted(self.attrs))
 
-        ret += "\n\nGoal:\n"
-        ret += str(self.goal)
-        ret += "\n\nProof.\n"
+        ret += "\n\n# Goal:\n"
+        ret += f"{','.join(sorted(self.goal[0]))} -> {','.join(sorted(self.goal[1]))}"
+        ret += "\n\n# Proof.\n"
         for index in range(len(self.context)):
             ret += f" ({index + 1}) {self.context[index]['description']}\n"
 
@@ -51,7 +47,18 @@ class Prover:
     def print_fds(self) -> None:
         for fd in self.fds:
             print(sorted(fd))
+    
+    def exist(self, fd):
+        lhs = sorted(set(fd[0]))
+        rhs = sorted(set(fd[1]))
 
+        for i in range(len(self.fds)):
+            llhs = sorted(set(self.fds[i][0]))
+            rrhs = sorted(set(self.fds[i][1]))
+            if lhs == llhs and rhs == rrhs:
+                return i + 1
+        return -1
+    
     def we_know_that(self, fd: list) -> bool:
 
         lhs = set(fd[0])
@@ -64,6 +71,11 @@ class Prover:
         if not rhs.issubset(self.attrs):
             self.errmsg = f"The attribute in functional dependency {rhs} is not valid."
             return False
+
+        # loc = self.exist(fd)
+        # if loc != -1:
+        #     self.errmsg = f"We already know that {sorted(fd[0])} -> {sorted(fd[1])} at step ({loc})."
+        #     return False
 
         ret = f"We know that {sorted(fd[0])} -> {sorted(fd[1])}."
         self.context.append({"fd": fd, "description": ret})
@@ -99,7 +111,7 @@ class Prover:
                 f"Reflexivity failed, the right-hand-side attribute {rhs} is not valid."
             )
             return False
-
+        
         if rhs.issubset(lhs):
             ret = f"Therefore {sorted(lhs)} -> {sorted(rhs)} by Reflexivity."
             self.context.append(
@@ -155,7 +167,7 @@ class Prover:
                     f"Augmentation failed, the augmented attribute {R} is not valid."
                 )
                 return False
-
+             
             lhs2 = set(fd_src[0]).union(set(R))  # left-hand-side after augmentation
             rhs2 = set(fd_src[1]).union(set(R))  # right-hand-side after augmentation
 
@@ -194,7 +206,7 @@ class Prover:
         #   (4) {C} → {A, C}
         #
         #     Therefore {C} → {A, B, C} by Transitivity of (4) and (3).
-
+        
         fdA = self.context[stepA - 1]["fd"]
         fdB = self.context[stepB - 1]["fd"]
 

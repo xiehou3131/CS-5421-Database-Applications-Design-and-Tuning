@@ -68,7 +68,7 @@ def on_button_click_fd():
         output_text.delete("1.0", tk.END)
         output_text.insert(tk.END, f"{PROVER.get_procedure()}")
     else:
-        output_text.insert(tk.END, f"\nerror!")
+        output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
 
 def on_button_click_goal():
     global R

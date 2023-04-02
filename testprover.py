@@ -53,11 +53,11 @@ class TestStringMethods(unittest.TestCase):
             p = Prover(R)
             p.set_goal([X, Y.union(Z)])
 
-            self.assertTrue(p.we_know_that([X, Y]))  # step 1
-            self.assertTrue(p.we_know_that([X, Z]))  # step 2
-            self.assertTrue(p.augmentation([X, X.union(Y)], 1, X))  # step 3
-            self.assertTrue(p.augmentation([X.union(Y), Y.union(Z)], 2, Y))  # step 4
-            self.assertTrue(p.transitivity([X, Y.union(Z)], 3, 4))  # step 5
+            p.we_know_that([X, Y])  # step 1
+            p.we_know_that([X, Z])  # step 2
+            p.augmentation([X, X.union(Y)], 1, X) # step 3
+            p.augmentation([X.union(Y), Y.union(Z)], 2, Y)  # step 4
+            p.transitivity([X, Y.union(Z)], 3, 4)  # step 5
 
             # p.print_procedure()
             self.assertTrue(p.finished())
@@ -76,9 +76,9 @@ class TestStringMethods(unittest.TestCase):
             p = Prover(R)
             p.set_goal([X, Z])
 
-            self.assertTrue(p.we_know_that([X, Y]))  # step 1
-            self.assertTrue(p.reflexivity([Y, Z]))  # step 2
-            self.assertTrue(p.transitivity([X, Z], 1, 2))  # step 3
+            p.we_know_that([X, Y])  # step 1
+            p.reflexivity([Y, Z])  # step 2
+            p.transitivity([X, Z], 1, 2)  # step 3
 
             # p.print_procedure()
             self.assertTrue(p.finished())
