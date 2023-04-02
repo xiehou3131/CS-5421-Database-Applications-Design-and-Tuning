@@ -209,7 +209,7 @@ def on_button_click_proof():
             output_text.delete("1.0", tk.END)
             output_text.insert(tk.END, f"{PROVER.get_procedure()}")
         else:
-            output_text.insert(tk.END, f"\nerror!")
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
 
     elif rule == "AUG":
         if len(words) != 4:
@@ -240,7 +240,7 @@ def on_button_click_proof():
             output_text.delete("1.0", tk.END)
             output_text.insert(tk.END, f"{PROVER.get_procedure()}")
         else:
-            output_text.insert(tk.END, f"\nerror!")
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
 
     elif rule == "REF":
         if len(words) != 2:
@@ -251,7 +251,7 @@ def on_button_click_proof():
             output_text.delete("1.0", tk.END)
             output_text.insert(tk.END, f"{PROVER.get_procedure()}")
         else:
-            output_text.insert(tk.END, f"\nerror!")
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
         
     else: 
         output_text.insert(tk.END, f"\nerror!")
