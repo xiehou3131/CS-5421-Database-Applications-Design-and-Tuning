@@ -5,19 +5,20 @@ class Prover:
         self.context = []
         self.status = {}
         self.goal = None
+        self.errmsg = ""
 
     def set_goal(self, fd) -> bool:
         lhs = set(fd[0])
         rhs = set(fd[1])
         self.goal = [sorted(list(lhs)), sorted(list(rhs))]
         return True
-    
+
     def finished(self) -> bool:
         if self.goal is None:
             raise Exception("No goal is set.")
         if len(self.fds) == 0:
             return False
-        
+
         goal_lhs = set(self.goal[0])
         goal_rhs = set(self.goal[1])
         last_lhs = set(self.fds[-1][0])
@@ -44,7 +45,7 @@ class Prover:
             ret += f" ({index + 1}) {self.context[index]['description']}\n"
 
         if self.finished():
-            ret += " Q.E.D."
+            ret += "Q.E.D."
         return ret
 
     def print_fds(self) -> None:
@@ -52,9 +53,22 @@ class Prover:
             print(sorted(fd))
 
     def we_know_that(self, fd: list) -> bool:
+
+        lhs = set(fd[0])
+        rhs = set(fd[1])
+
+        if not lhs.issubset(self.attrs):
+            self.errmsg = f"The attribute in functional dependency {lhs} is not valid."
+            return False
+
+        if not rhs.issubset(self.attrs):
+            self.errmsg = f"The attribute in functional dependency {rhs} is not valid."
+            return False
+
         ret = f"We know that {sorted(fd[0])} -> {sorted(fd[1])}."
         self.context.append({"fd": fd, "description": ret})
         self.fds.append(fd)
+        self.errmsg = ""
         return True
 
     """
@@ -73,6 +87,19 @@ class Prover:
         #     (7) Therefore {A, B, C} → {A, B} by Reflexivity since (6).
         lhs = set(fd_dst[0])
         rhs = set(fd_dst[1])
+
+        if not lhs.issubset(self.attrs):
+            self.errmsg = (
+                f"Reflexivity failed, the left-hand-side attribute {lhs} is not valid."
+            )
+            return False
+
+        if not rhs.issubset(self.attrs):
+            self.errmsg = (
+                f"Reflexivity failed, the right-hand-side attribute {rhs} is not valid."
+            )
+            return False
+
         if rhs.issubset(lhs):
             ret = f"Therefore {sorted(lhs)} -> {sorted(rhs)} by Reflexivity."
             self.context.append(
@@ -82,7 +109,10 @@ class Prover:
                 }
             )
             self.fds.append(fd_dst)
+            self.errmsg = ""
             return True
+
+        self.errmsg = "Reflexivity failed, since the right-hand-side is not a subset of the left-hand-side."
         return False
 
     """
@@ -112,6 +142,20 @@ class Prover:
             lhs1 = set(fd_dst[0])
             rhs1 = set(fd_dst[1])
 
+            if not lhs1.issubset(self.attrs):
+                self.errmsg = f"Augmentation failed, the left-hand-side attribute {lhs1} is not valid."
+                return False
+
+            if not rhs1.issubset(self.attrs):
+                self.errmsg = f"Augmentation failed, the right-hand-side attribute {rhs1} is not valid."
+                return False
+
+            if not set(R).issubset(self.attrs):
+                self.errmsg = (
+                    f"Augmentation failed, the augmented attribute {R} is not valid."
+                )
+                return False
+
             lhs2 = set(fd_src[0]).union(set(R))  # left-hand-side after augmentation
             rhs2 = set(fd_src[1]).union(set(R))  # right-hand-side after augmentation
 
@@ -124,10 +168,15 @@ class Prover:
                     }
                 )
                 self.fds.append(fd_dst)
+                self.errmsg = ""
                 return True
+
+            self.errmsg = f"Augmentation failed, '{','.join(sorted(fd_src[0]))}->{','.join(sorted(fd_src[1]))}' augment with '{','.join(sorted(R))}' does not equal to '{','.join(sorted(fd_dst[0]))}->{','.join(sorted(fd_dst[1]))}', please check the step ({stepA}) and the augmented attribute '{','.join(sorted(R))}'."
+            return False
         except Exception as e:
             print(e)
-        return False
+            self.errmsg = "Augmentation failed, possibly the step number is not valid."
+            return False
 
     """
     Check Armstrong Axioms Transitivity
@@ -158,17 +207,22 @@ class Prover:
             if rhs1.issubset(lhs2):
                 lhs_new = lhs1
                 rhs_new = rhs2
-                fd_new = [list(lhs_new), list(rhs_new)]
-                ret = f"Therefore {sorted(lhs_new)} -> {sorted(rhs_new)} by Transitivity of ({stepB}) and ({stepA})."
-                self.context.append(
-                    {
-                        "fd": fd_new,
-                        "description": ret,
-                    }
-                )
-                self.fds.append(fd_new)
-                return True
+
+                if lhs_new == set(fd_dst[0]) and rhs_new == set(fd_dst[1]):
+
+                    fd_new = [list(lhs_new), list(rhs_new)]
+                    ret = f"Therefore {sorted(lhs_new)} -> {sorted(rhs_new)} by Transitivity of ({stepB}) and ({stepA})."
+                    self.context.append(
+                        {
+                            "fd": fd_new,
+                            "description": ret,
+                        }
+                    )
+                    self.fds.append(fd_new)
+                    self.errmsg = ""
+                    return True
 
             fdB = self.context[stepA - 1]["fd"]
             fdA = self.context[stepB - 1]["fd"]
+        self.errmsg = "Transitivity failed, please check the arguments."
         return False
