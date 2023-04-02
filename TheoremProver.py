@@ -22,12 +22,18 @@ def get_closure(R, F, S):
 
 def on_button_click_schema():
     global R
+    global F
+    global G
 
     text = input_box_schema.get()
+    input_box_schema.delete(0, tk.END)
+
     words = [word.strip() for word in text.split(",")]
     valid = all(len(word) == 1 and word.isupper() for word in words)
     if valid:
         R = set(words)
+        F = []
+        G = []
         output_text.delete("1.0", tk.END)
         output_text.insert(tk.END, f"input '{text}' is valid.")
     else:
@@ -52,14 +58,12 @@ def on_button_click_fd():
     if valid:
         for word in words:
             if word not in R:
-                output_text.delete("1.0", tk.END)
-                output_text.insert(tk.END, f"attribute '{word}' is not in the schema.")
+                output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
                 return
         
         LHS = words
     else:
-        output_text.delete("1.0", tk.END)
-        output_text.insert(tk.END, f"LHS '{text_LHS}' is not valid!")
+        output_text.insert(tk.END, f"\nLHS '{text_LHS}' is not valid!")
         return
 
     words = []
@@ -68,51 +72,83 @@ def on_button_click_fd():
     if valid:
         for word in words:
             if word not in R:
-                output_text.delete("1.0", tk.END)
-                output_text.insert(tk.END, f"attribute '{word}' is not in the schema.")
+                output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
                 return
         
         RHS = words
     else:
-        output_text.delete("1.0", tk.END)
-        output_text.insert(tk.END, f"RHS '{text_RHS}' is not valid!")
+        output_text.insert(tk.END, f"\nRHS '{text_RHS}' is not valid!")
         return
 
     FD = [LHS, RHS]
-    output_text.delete("1.0", tk.END)
-    output_text.insert(tk.END, f"functional dependency '{LHS}' -> '{RHS}' added")
     F.append(FD)
+    output_fds()
 
-def on_button_click_attributes():
+def on_button_click_goal():
     global R
     global F
-    global S
-    
-    text = input_box_attributes.get()
-    words = [word.strip() for word in text.split(",")]
+    global G
+    LHS = []
+    RHS = []
+
+    text_LHS = input_box_goal_LHS.get()
+    text_RHS = input_box_goal_RHS.get()
+
+    input_box_goal_LHS.delete(0, tk.END)
+    input_box_goal_RHS.delete(0, tk.END)
+
+    words = []
+    words = [word.strip() for word in text_LHS.split(",")]
     valid = all(len(word) == 1 and word.isupper() for word in words)
     if valid:
         for word in words:
             if word not in R:
-                output_text.delete("1.0", tk.END)
-                output_text.insert(tk.END, f"attribute '{word}' is not in the schema.")
+                output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
                 return
         
-        S = set(words)
-
-        closure = get_closure(R, F, S)
-
-        print(closure)
-        
-        output_text.delete("1.0", tk.END)
-        output_text.insert(tk.END, f"the closure is '{closure}'.")
+        LHS = words
     else:
-        output_text.delete("1.0", tk.END)
-        output_text.insert(tk.END, f"input '{text}' is not valid!")
+        output_text.insert(tk.END, f"\nLHS '{text_LHS}' is not valid!")
+        return
+
+    words = []
+    words = [word.strip() for word in text_RHS.split(",")]
+    valid = all(len(word) == 1 and word.isupper() for word in words)
+    if valid:
+        for word in words:
+            if word not in R:
+                output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                return
+        
+        RHS = words
+    else:
+        output_text.insert(tk.END, f"\nRHS '{text_RHS}' is not valid!")
+        return
+
+    G = [LHS, RHS]
+    output_fds()
+
+def output_fds():
+    global R
+    global F
+    global G
+
+    output_text.delete("1.0", tk.END)
+    R_list = list(R)
+    R_list.sort()
+    output_text.insert(tk.END, f"schema = '{R_list}'")
+
+    index = 0
+    for fd in F:
+        index += 1
+        output_text.insert(tk.END, f"\n('{str(index)}') '{fd[0]}' -> '{fd[1]}'")
+
+    if len(G) > 0:
+        output_text.insert(tk.END, f"\nYour goal: '{G[0]}' -> '{G[1]}'")
 
 R = {}
 F = []
-S = {}
+G = []
 
 # 创建主窗口
 root = tk.Tk()
@@ -130,23 +166,31 @@ input_box_schema.grid(row=1, column=0)
 button_schema = tk.Button(left_frame, text="confirm", command=on_button_click_schema)
 button_schema.grid(row=2, column=0)
 
+label_FD = tk.Label(left_frame, text="Please input the FDs")
+label_FD.grid(row=4, column=0)
 label_LHS = tk.Label(left_frame, text="Please input the LHS")
-label_LHS.grid(row=3, column=0)
+label_LHS.grid(row=5, column=0)
 label_RHS = tk.Label(left_frame, text="Please input the RHS")
-label_RHS.grid(row=3, column=1)
+label_RHS.grid(row=5, column=1)
 input_box_LHS = tk.Entry(left_frame)
-input_box_LHS.grid(row=4, column=0)
+input_box_LHS.grid(row=6, column=0)
 input_box_RHS = tk.Entry(left_frame)
-input_box_RHS.grid(row=4, column=1)
-button_fd = tk.Button(left_frame, text="confirm", command=on_button_click_fd)
-button_fd.grid(row=5, column=0)
+input_box_RHS.grid(row=6, column=1)
+button_fd = tk.Button(left_frame, text="add", command=on_button_click_fd)
+button_fd.grid(row=7, column=0)
 
-label_attributes = tk.Label(left_frame, text="Please input the attributes")
-label_attributes.grid(row=6, column=0)
-input_box_attributes = tk.Entry(left_frame)
-input_box_attributes.grid(row=7, column=0)
-button_attributes = tk.Button(left_frame, text="confirm", command=on_button_click_attributes)
-button_attributes.grid(row=8, column=0)
+label_goal = tk.Label(left_frame, text="Please input your goal")
+label_goal.grid(row=9, column=0)
+label_goal_LHS = tk.Label(left_frame, text="Please input the LHS")
+label_goal_LHS.grid(row=10, column=0)
+label_goal_RHS = tk.Label(left_frame, text="Please input the RHS")
+label_goal_RHS.grid(row=10, column=1)
+input_box_goal_LHS = tk.Entry(left_frame)
+input_box_goal_LHS.grid(row=11, column=0)
+input_box_goal_RHS = tk.Entry(left_frame)
+input_box_goal_RHS.grid(row=11, column=1)
+button_goal = tk.Button(left_frame, text="confirm", command=on_button_click_goal)
+button_goal.grid(row=12, column=0)
 
 # 右边的框架
 right_frame = tk.Frame(root)
