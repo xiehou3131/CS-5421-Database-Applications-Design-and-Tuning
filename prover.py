@@ -238,3 +238,51 @@ class Prover:
             fdA = self.context[stepB - 1]["fd"]
         self.errmsg = "Transitivity failed, please check the arguments."
         return False
+
+    """
+    Check Multi-valued Armstrong Axioms Transitivity
+    Args:
+        fd (list): The Multi-valued dependency result you want to check
+        stepA (int): The step number in the prover's context
+        stepB (int): The step number in the prover's context
+    Returns:
+    """
+    def mv_transitivity(self, fd_dst, stepA: int, stepB: int) -> bool:
+        # Therefore `fd` by Transitivity of `stepA` and `stepB`
+        # Example:
+        #   (3) {A, C} → {A, B, C}
+        #   (4) {C} → {A, C}
+        #
+        #     Therefore {C} → {A, B, C} by Transitivity of (4) and (3).
+        
+        fdA = self.context[stepA - 1]["mvd"]
+        fdB = self.context[stepB - 1]["mvd"]
+
+        for _ in range(2):
+            lhs1 = set(fdA[0])
+            rhs1 = set(fdA[1])
+            lhs2 = set(fdB[0])
+            rhs2 = set(fdB[1])
+
+            if rhs1 == lhs2:
+                lhs_new = lhs1
+                rhs_new = rhs2 - rhs1
+
+                if lhs_new == set(fd_dst[0]) and rhs_new == set(fd_dst[1]):
+
+                    mvd_new = [list(lhs_new), list(rhs_new)]
+                    ret = f"Therefore {sorted(lhs_new)} ->> {sorted(rhs_new)} by Transitivity of ({stepB}) and ({stepA})."
+                    self.context.append(
+                        {
+                            "mvd": mvd_new,
+                            "description": ret,
+                        }
+                    )
+                    self.fds.append(mvd_new)
+                    self.errmsg = ""
+                    return True
+
+            fdB = self.context[stepA - 1]["fd"]
+            fdA = self.context[stepB - 1]["fd"]
+        self.errmsg = "Transitivity failed, please check the arguments."
+        return False
