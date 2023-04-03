@@ -423,7 +423,7 @@ def on_button_click_proof():
             output_text.insert(tk.END, f"\n'{attributes}' is not valid!")
             return
 
-        proof_log = PROVER.augmentation(goal, index, attributes)
+        proof_log = PROVER.augmentation(goal, index, attributes, "fd")
         if proof_log:
             output_text.delete("1.0", tk.END)
             output_text.insert(tk.END, f"{PROVER.get_procedure()}")
@@ -506,6 +506,36 @@ def on_button_click_proof():
         else:
             output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
 
+    elif rule == "mvAUG":
+        if len(words) != 4:
+            output_text.insert(tk.END, f"\ninvalid proof!")
+
+        index = 0
+        index_str = words[2]
+        try:
+            index = int(index_str)
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index!")
+            return
+
+        attributes_list = words[3]
+        attributes = [word.strip() for word in attributes_list.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in attributes)
+        if valid:
+            for word in attributes:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+        else:
+            output_text.insert(tk.END, f"\n'{attributes}' is not valid!")
+            return
+
+        proof_log = PROVER.augmentation(goal, index, attributes, "mvd")
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
 
     else: 
         output_text.insert(tk.END, f"\nerror!")
