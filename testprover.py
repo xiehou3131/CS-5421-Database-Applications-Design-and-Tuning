@@ -12,7 +12,9 @@ class TestStringMethods(unittest.TestCase):
 
         self.assertTrue(p.we_know_that([["A"], ["B"]], "fd"), p.errmsg)
         self.assertTrue(p.we_know_that([["C"], ["A"]], "fd"), p.errmsg)
-        self.assertTrue(p.augmentation([["A", "C"], ["A", "B", "C"]], 1, ["A", "C"], "fd"), p.errmsg)
+        self.assertTrue(
+            p.augmentation([["A", "C"], ["A", "B", "C"]], 1, ["A", "C"], "fd"), p.errmsg
+        )
         self.assertTrue(p.augmentation([["C"], ["A", "C"]], 2, ["C"], "fd"), p.errmsg)
         self.assertTrue(p.transitivity([["C"], ["A", "B", "C"]], 3, 4), p.errmsg)
         self.assertTrue(p.reflexivity([["A", "B", "C"], ["A", "B"]]), p.errmsg)
@@ -29,13 +31,18 @@ class TestStringMethods(unittest.TestCase):
         self.assertTrue(p.we_know_that([["C"], ["A"]], "fd"), p.errmsg)
         self.assertTrue(p.mv_replication([["A"], ["B"]], 1), p.errmsg)
         self.assertTrue(p.mv_replication([["C"], ["A"]], 2), p.errmsg)
-        self.assertTrue(p.augmentation([["A", "C"], ["A", "B", "C"]], 1, ["A", "C"], "fd"), p.errmsg)
-        self.assertTrue(p.augmentation([["A", "C"], ["A", "B", "C"]], 3, ["A", "C"], "mvd"), p.errmsg)
+        self.assertTrue(
+            p.augmentation([["A", "C"], ["A", "B", "C"]], 1, ["A", "C"], "fd"), p.errmsg
+        )
+        self.assertTrue(
+            p.augmentation([["A", "C"], ["A", "B", "C"]], 3, ["A", "C"], "mvd"),
+            p.errmsg,
+        )
         self.assertTrue(p.augmentation([["C"], ["A", "C"]], 2, ["C"], "fd"), p.errmsg)
         self.assertTrue(p.augmentation([["C"], ["A", "C"]], 4, ["C"], "mvd"), p.errmsg)
-        self.assertTrue(p.transitivity([["C"], ["A", "B", "C"]], 7,5), p.errmsg)
+        self.assertTrue(p.transitivity([["C"], ["A", "B", "C"]], 7, 5), p.errmsg)
         self.assertTrue(p.mv_transitivity([["C"], ["B"]], 8, 6), p.errmsg)
-        
+
         p.print_procedure()
         self.assertTrue(p.finished())
 
@@ -51,7 +58,9 @@ class TestStringMethods(unittest.TestCase):
             p.transitivity([["A", "C"], ["A", "B"]], 1, 2)
         )  # step 4, failed
         self.assertTrue(p.transitivity([["C"], ["B"]], 1, 2))  # step 4, ok
-        self.assertTrue(p.augmentation([["A", "C"], ["A", "B"]], 4, "A", "fd"))  # step 5
+        self.assertTrue(
+            p.augmentation([["A", "C"], ["A", "B"]], 4, "A", "fd")
+        )  # step 5
         self.assertTrue(p.transitivity([["C"], ["A", "B"]], 5, 3))  # step 6
 
         p.print_procedure()
