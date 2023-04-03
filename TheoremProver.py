@@ -537,6 +537,33 @@ def on_button_click_proof():
         else:
             output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
 
+    elif rule == "COA":
+        if len(words) != 4:
+            output_text.insert(tk.END, f"\ninvalid proof!")
+        
+        index1 = 0
+        index1_str = words[2]
+        try:
+            index1 = int(index1_str)
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index1!")
+            return
+
+        index2 = 0
+        index2_str = words[3]
+        try:
+            index2 = int(index2_str)
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index2!")
+            return
+
+        proof_log = PROVER.mv_coalescence(goal, index1, index2)
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
+
     else: 
         output_text.insert(tk.END, f"\nerror!")
         return

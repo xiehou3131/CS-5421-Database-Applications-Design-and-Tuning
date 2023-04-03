@@ -418,3 +418,53 @@ class Prover:
 
         self.errmsg = "Complementation failed."
         return False
+
+    def mv_coalescence(self, fd_dst, stepA: int, stepB: int) -> bool:
+        try:
+            fdA = []
+            fdB = []
+            if "mvd" in self.context[stepA - 1]:
+                fdA = self.context[stepA - 1]["mvd"]
+                fdB = self.context[stepB - 1]["fd"]
+            elif "fd" in self.context[stepA - 1]:
+                fdA = self.context[stepB - 1]["mvd"]
+                fdB = self.context[stepA - 1]["fd"]
+
+            
+            lhs1 = set(fdA[0])
+            rhs1 = set(fdA[1])
+            lhs2 = set(fdB[0])
+            rhs2 = set(fdB[1])
+
+            print(lhs1 , set(fd_dst[0]))
+            print(rhs2 , set(fd_dst[1]))
+            print(rhs2, rhs1)
+            print(rhs1 & lhs2)
+
+            if lhs1 == set(fd_dst[0]) and rhs2 == set(fd_dst[1]) and rhs2.issubset(rhs1) and not (rhs1 & lhs2) :
+                print("test")
+
+                lhs_new = lhs1
+                rhs_new = rhs2
+                
+
+                fd_new = [list(lhs_new), list(rhs_new)]
+                ret = f"Therefore {sorted(lhs_new)} -> {sorted(rhs_new)} by Coalescence of ({stepB}) and ({stepA})."
+                self.context.append(
+                    {
+                        "fd": fd_new,
+                        "description": ret,
+                    }
+                )
+                self.fds.append(fd_new)
+                self.errmsg = ""
+                return True
+
+            self.errmsg = f"Coalescence failed, possibly the step number is incorrect."
+            return False
+        except IndexError:
+            self.errmsg = "Coalescence failed, the step number is out of range."
+            return False
+        except KeyError:
+            self.errmsg = "Coalescence failed, possibly the step number is not multi-valued."
+            return False
