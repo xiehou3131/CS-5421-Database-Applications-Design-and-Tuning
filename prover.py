@@ -282,7 +282,96 @@ class Prover:
                     self.errmsg = ""
                     return True
 
-            fdB = self.context[stepA - 1]["fd"]
-            fdA = self.context[stepB - 1]["fd"]
+            fdB = self.context[stepA - 1]["mvd"]
+            fdA = self.context[stepB - 1]["mvd"]
         self.errmsg = "Transitivity failed, please check the arguments."
+        return False
+
+    """
+    Check Multi-valued Armstrong Axioms Replication
+    Args:
+        fd (list): The functional dependency result you want to check
+        stepA (int): The step number in the prover's context
+    Returns:
+    """
+
+    def mv_replication(self, fd_dst, stepA: int) -> str:
+        # TODO: stepA is not used
+        # Therefore `fd` by Reflexivity since `stepA`.
+        # Example:
+        #     (6) We know that {B,C} ⊂ {A,B,C}.
+        #     (7) Therefore {A, B, C} → {A, B} by Reflexivity since (6).
+        lhs = set(fd_dst[0])
+        rhs = set(fd_dst[1])
+        fdA = self.context[stepA - 1]["fd"]
+
+        if not lhs.issubset(self.attrs):
+            self.errmsg = (
+                f"Replication failed, the left-hand-side attribute {lhs} is not valid."
+            )
+            return False
+
+        if not rhs.issubset(self.attrs):
+            self.errmsg = (
+                f"Replication failed, the right-hand-side attribute {rhs} is not valid."
+            )
+            return False
+        
+        if lhs == fdA[0] and rhs == fdA[1]:
+            ret = f"Therefore {sorted(lhs)} ->> {sorted(rhs)} by Replication."
+            self.context.append(
+                {
+                    "mvd": fd_dst,
+                    "description": ret,
+                }
+            )
+            self.fds.append(fd_dst)
+            self.errmsg = ""
+            return True
+
+        self.errmsg = "Replication failed."
+        return False
+
+    """
+    Check Multi-valued Armstrong Axioms Complementation
+    Args:
+        fd (list): The functional dependency result you want to check
+        stepA (int): The step number in the prover's context
+    Returns:
+    """
+
+    def mv_complementation(self, fd_dst, stepA: int) -> str:
+        # Therefore `fd` by Reflexivity since `stepA`.
+        # Example:
+        #     (6) We know that {B,C} ⊂ {A,B,C}.
+        #     (7) Therefore {A, B, C} → {A, B} by Reflexivity since (6).
+        lhs = set(fd_dst[0])
+        rhs = set(fd_dst[1])
+        mvdA = self.context[stepA - 1]["mvd"]
+
+        if not lhs.issubset(self.attrs):
+            self.errmsg = (
+                f"Complementation failed, the left-hand-side attribute {lhs} is not valid."
+            )
+            return False
+
+        if not rhs.issubset(self.attrs):
+            self.errmsg = (
+                f"Complementation failed, the right-hand-side attribute {rhs} is not valid."
+            )
+            return False
+        
+        if lhs == mvdA[0] and rhs == self.attrs - mvdA[0] - mvdA[1]:
+            ret = f"Therefore {sorted(lhs)} ->> {sorted(rhs)} by Complementation."
+            self.context.append(
+                {
+                    "mvd": fd_dst,
+                    "description": ret,
+                }
+            )
+            self.fds.append(fd_dst)
+            self.errmsg = ""
+            return True
+
+        self.errmsg = "Complementation failed."
         return False
