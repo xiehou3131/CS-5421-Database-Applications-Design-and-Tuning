@@ -29,59 +29,7 @@ def on_button_click_dependency():
     text_dependency = input_box_dependency.get()
     input_box_dependency.delete(0, tk.END)
 
-    if "->" in text_dependency:
-        # functional dependency
-        words = []
-        words = [word.strip() for word in text_dependency.split("->")]
-        if len(words) != 2:
-            output_text.insert(tk.END, f"\ndependency format error")
-            return
-        
-        LHS_str = words[0]
-        RHS_str = words[1]
-        LHS = []
-        RHS = []
-
-        # LHS
-        words = []
-        words = [word.strip() for word in LHS_str.split(",")]
-        valid = all(len(word) == 1 and word.isupper() for word in words)
-        if valid:
-            for word in words:
-                if word not in R:
-                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
-                    return
-            
-            LHS = words
-        else:
-            output_text.insert(tk.END, f"\nLHS '{text_LHS}' is not valid!")
-            return
-
-        # RHS
-        words = []
-        words = [word.strip() for word in RHS_str.split(",")]
-        valid = all(len(word) == 1 and word.isupper() for word in words)
-        if valid:
-            for word in words:
-                if word not in R:
-                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
-                    return
-            
-            RHS = words
-        else:
-            output_text.insert(tk.END, f"\nRHS '{text_RHS}' is not valid!")
-            return
-
-
-        FD = [LHS, RHS]
-        proof_log = PROVER.we_know_that(FD, "fd")
-        if proof_log:
-            output_text.delete("1.0", tk.END)
-            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
-        else:
-            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
-
-    elif "->>" in text_dependency:
+    if "->>" in text_dependency:
         # multi-valued dependency
         words = []
         words = [word.strip() for word in text_dependency.split("->>")]
@@ -133,6 +81,58 @@ def on_button_click_dependency():
         else:
             output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
     
+    elif "->" in text_dependency:
+        # functional dependency
+        words = []
+        words = [word.strip() for word in text_dependency.split("->")]
+        if len(words) != 2:
+            output_text.insert(tk.END, f"\ndependency format error")
+            return
+        
+        LHS_str = words[0]
+        RHS_str = words[1]
+        LHS = []
+        RHS = []
+
+        # LHS
+        words = []
+        words = [word.strip() for word in LHS_str.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in words)
+        if valid:
+            for word in words:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+            
+            LHS = words
+        else:
+            output_text.insert(tk.END, f"\nLHS '{text_LHS}' is not valid!")
+            return
+
+        # RHS
+        words = []
+        words = [word.strip() for word in RHS_str.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in words)
+        if valid:
+            for word in words:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+            
+            RHS = words
+        else:
+            output_text.insert(tk.END, f"\nRHS '{text_RHS}' is not valid!")
+            return
+
+
+        FD = [LHS, RHS]
+        proof_log = PROVER.we_know_that(FD, "fd")
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
+
     else:
         output_text.insert(tk.END, f"\ndependency format error")
         return
@@ -145,7 +145,59 @@ def on_button_click_goal():
     text_goal = input_box_goal.get()
     input_box_goal.delete(0, tk.END)
 
-    if "->" in text_goal:
+    if "->>" in text_goal:
+        # multi-valued dependency
+        words = []
+        words = [word.strip() for word in text_goal.split("->>")]
+        if len(words) != 2:
+            output_text.insert(tk.END, f"\ndependency format error")
+            return
+        
+        LHS_str = words[0]
+        RHS_str = words[1]
+        LHS = []
+        RHS = []
+
+        # LHS
+        words = []
+        words = [word.strip() for word in LHS_str.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in words)
+        if valid:
+            for word in words:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+            
+            LHS = words
+        else:
+            output_text.insert(tk.END, f"\nLHS '{LHS_str}' is not valid!")
+            return
+
+        # RHS
+        words = []
+        words = [word.strip() for word in RHS_str.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in words)
+        if valid:
+            for word in words:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+            
+            RHS = words
+        else:
+            output_text.insert(tk.END, f"\nRHS '{RHS_str}' is not valid!")
+            return
+
+
+        G = [LHS, RHS]
+        proof_log =  PROVER.set_goal(G, "mvd")
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror!")
+    
+    elif "->" in text_goal:
         # functional dependency
         words = []
         words = [word.strip() for word in text_goal.split("->")]
@@ -185,7 +237,7 @@ def on_button_click_goal():
             
             RHS = words
         else:
-            output_text.insert(tk.END, f"\nRHS '{text_RHS}' is not valid!")
+            output_text.insert(tk.END, f"\nRHS '{RHS_str}' is not valid!")
             return
 
 
@@ -197,58 +249,6 @@ def on_button_click_goal():
         else:
             output_text.insert(tk.END, f"\nerror!")
 
-    elif "->>" in text_goal:
-        # multi-valued dependency
-        words = []
-        words = [word.strip() for word in text_goal.split("->>")]
-        if len(words) != 2:
-            output_text.insert(tk.END, f"\ndependency format error")
-            return
-        
-        LHS_str = words[0]
-        RHS_str = words[1]
-        LHS = []
-        RHS = []
-
-        # LHS
-        words = []
-        words = [word.strip() for word in LHS_str.split(",")]
-        valid = all(len(word) == 1 and word.isupper() for word in words)
-        if valid:
-            for word in words:
-                if word not in R:
-                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
-                    return
-            
-            LHS = words
-        else:
-            output_text.insert(tk.END, f"\nLHS '{text_LHS}' is not valid!")
-            return
-
-        # RHS
-        words = []
-        words = [word.strip() for word in RHS_str.split(",")]
-        valid = all(len(word) == 1 and word.isupper() for word in words)
-        if valid:
-            for word in words:
-                if word not in R:
-                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
-                    return
-            
-            RHS = words
-        else:
-            output_text.insert(tk.END, f"\nRHS '{text_RHS}' is not valid!")
-            return
-
-
-        G = [LHS, RHS]
-        proof_log =  PROVER.set_goal(G, "mvd")
-        if proof_log:
-            output_text.delete("1.0", tk.END)
-            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
-        else:
-            output_text.insert(tk.END, f"\nerror!")
-    
     else:
         output_text.insert(tk.END, f"\ndependency format error")
         return
