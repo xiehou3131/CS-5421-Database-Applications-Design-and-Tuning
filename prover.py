@@ -41,7 +41,9 @@ class Prover:
 
         if self.goal['type'] == "mvd":
             ret += "Multi-valued dependency: "
-        ret += ','.join(sorted(self.goal["fd"][0])) + " -> " + ','.join(sorted(self.goal["fd"][1]))
+            ret += ','.join(sorted(self.goal["fd"][0])) + " ->> " + ','.join(sorted(self.goal["fd"][1]))
+        elif self.goal['type'] == "fd":
+            ret += ','.join(sorted(self.goal["fd"][0])) + " -> " + ','.join(sorted(self.goal["fd"][1]))
 
         ret += "\n\n# Proof.\n"
         for index in range(len(self.context)):
@@ -93,7 +95,10 @@ class Prover:
         #     self.errmsg = f"We already know that {sorted(fd[0])} -> {sorted(fd[1])} at step ({loc})."
         #     return False
 
-        ret = f"We know that {sorted(fd[0])} -> {sorted(fd[1])}."
+        if t == "fd":
+            ret = f"We know that {sorted(fd[0])} -> {sorted(fd[1])}."
+        elif t == "mvd":
+            ret = f"We know that {sorted(fd[0])} ->> {sorted(fd[1])}."
         self.context.append({t: fd, "description": ret})
         self.fds.append(fd)
         self.errmsg = ""
@@ -267,6 +272,7 @@ class Prover:
         except KeyError:
             self.errmsg = "Transitivity failed, maybe the step number is refering a multi-valued fd."
             return False
+    
     """
     Check Multi-valued Armstrong Axioms Transitivity
     Args:
@@ -398,7 +404,7 @@ class Prover:
             self.errmsg = f"Complementation failed, the right-hand-side attribute {rhs} is not valid."
             return False
 
-        if lhs == mvdA[0] and rhs == self.attrs - mvdA[0] - mvdA[1]:
+        if lhs == set(mvdA[0]) and rhs == (self.attrs - set(mvdA[0]) - set(mvdA[1])):
             ret = f"Therefore {sorted(lhs)} ->> {sorted(rhs)} by Complementation."
             self.context.append(
                 {

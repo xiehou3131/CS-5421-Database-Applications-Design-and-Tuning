@@ -253,7 +253,6 @@ def on_button_click_goal():
         output_text.insert(tk.END, f"\ndependency format error")
         return
     
-
 def on_button_click_proof():
     global R
     global F
@@ -273,47 +272,102 @@ def on_button_click_proof():
     words = [word.strip() for word in text.split("|")]
 
     # goal
-    goal = words[0]
-    goal_split = [word.strip() for word in goal.split("->")]
-    if len(goal_split) != 2:
-        output_text.insert(tk.END, f"\ninvalid goal!")
-        return
+    text_goal = words[0]
+    goal = []
+
+    if "->>" in text_goal:
+        # multi-valued dependency
+        text_goal_splited = []
+        text_goal_splited = [word.strip() for word in text_goal.split("->>")]
+        if len(text_goal_splited) != 2:
+            output_text.insert(tk.END, f"\ndependency format error")
+            return
+        
+        LHS_str = text_goal_splited[0]
+        RHS_str = text_goal_splited[1]
+        LHS = []
+        RHS = []
+
+        # LHS
+        text_goal_splited = []
+        text_goal_splited = [word.strip() for word in LHS_str.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in text_goal_splited)
+        if valid:
+            for word in text_goal_splited:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+            
+            LHS = text_goal_splited
+        else:
+            output_text.insert(tk.END, f"\nLHS '{LHS_str}' is not valid!")
+            return
+
+        # RHS
+        text_goal_splited = []
+        text_goal_splited = [word.strip() for word in RHS_str.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in text_goal_splited)
+        if valid:
+            for word in text_goal_splited:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+            
+            RHS = text_goal_splited
+        else:
+            output_text.insert(tk.END, f"\nRHS '{RHS_str}' is not valid!")
+            return
+
+        goal = [LHS, RHS]
+
+    elif "->" in text_goal:
+        # functional dependency
+        text_goal_splited = []
+        text_goal_splited = [word.strip() for word in text_goal.split("->")]
+        if len(text_goal_splited) != 2:
+            output_text.insert(tk.END, f"\ndependency format error")
+            return
+        
+        LHS_str = text_goal_splited[0]
+        RHS_str = text_goal_splited[1]
+        LHS = []
+        RHS = []
+
+        # LHS
+        text_goal_splited = []
+        text_goal_splited = [word.strip() for word in LHS_str.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in text_goal_splited)
+        if valid:
+            for word in text_goal_splited:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+            
+            LHS = text_goal_splited
+        else:
+            output_text.insert(tk.END, f"\nLHS '{text_LHS}' is not valid!")
+            return
+
+        # RHS
+        text_goal_splited = []
+        text_goal_splited = [word.strip() for word in RHS_str.split(",")]
+        valid = all(len(word) == 1 and word.isupper() for word in text_goal_splited)
+        if valid:
+            for word in text_goal_splited:
+                if word not in R:
+                    output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
+                    return
+            
+            RHS = text_goal_splited
+        else:
+            output_text.insert(tk.END, f"\nRHS '{RHS_str}' is not valid!")
+            return
+
+        goal = [LHS, RHS]
     
-    LHS = []
-    RHS = []
-
-    # LHS of the goal
-    attributes = []
-    attributes = [word.strip() for word in goal_split[0].split(",")]
-    valid = all(len(word) == 1 and word.isupper() for word in attributes)
-    if valid:
-        for word in attributes:
-            if word not in R:
-                output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
-                return
-        
-        LHS = attributes
     else:
-        output_text.insert(tk.END, f"\nLHS '{goal_split[0]}' is not valid!")
+        output_text.insert(tk.END, f"\ndependency format error")
         return
-
-    # RHS of the goal
-    attributes = []
-    attributes = [word.strip() for word in goal_split[1].split(",")]
-    valid = all(len(word) == 1 and word.isupper() for word in attributes)
-    if valid:
-        for word in attributes:
-            if word not in R:
-                output_text.insert(tk.END, f"\nattribute '{word}' is not in the schema.")
-                return
-        
-        RHS = attributes
-    else:
-        output_text.insert(tk.END, f"\nRHS '{goal_split[1]}' is not valid!")
-        return
-
-
-    goal = [LHS, RHS]
 
     # rule
     rule = words[1]
@@ -386,7 +440,73 @@ def on_button_click_proof():
             output_text.insert(tk.END, f"{PROVER.get_procedure()}")
         else:
             output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
+
+    elif rule == "mvTRA":
+        if len(words) != 4:
+            output_text.insert(tk.END, f"\ninvalid proof!")
         
+        index1 = 0
+        index1_str = words[2]
+        try:
+            index1 = int(index1_str)
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index1!")
+            return
+
+        index2 = 0
+        index2_str = words[3]
+        try:
+            index2 = int(index2_str)
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index2!")
+            return
+
+        proof_log = PROVER.mv_transitivity(goal, index1, index2)
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
+
+    elif rule == "REP":
+        if len(words) != 3:
+            output_text.insert(tk.END, f"\ninvalid proof!")
+        
+        index1 = 0
+        index1_str = words[2]
+        try:
+            index1 = int(index1_str)
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index1!")
+            return
+
+        proof_log = PROVER.mv_replication(goal, index1)
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
+
+    elif rule == "COM":
+        if len(words) != 3:
+            output_text.insert(tk.END, f"\ninvalid proof!")
+        
+        index1 = 0
+        index1_str = words[2]
+        try:
+            index1 = int(index1_str)
+        except ValueError:
+            output_text.insert(tk.END, f"\ninvalid index1!")
+            return
+
+        proof_log = PROVER.mv_complementation(goal, index1)
+        if proof_log:
+            output_text.delete("1.0", tk.END)
+            output_text.insert(tk.END, f"{PROVER.get_procedure()}")
+        else:
+            output_text.insert(tk.END, f"\nerror! " + PROVER.errmsg)
+
+
     else: 
         output_text.insert(tk.END, f"\nerror!")
         return
